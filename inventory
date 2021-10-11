@@ -12,9 +12,9 @@ controller2 clustermember=cluster1 new_hostname=controller1 ansible_host=192.168
 #worker2 new_hostname=worker2 ansible_host=192.168.1.20 ansible_user=ubuntu
 
 [loadbalancers]
-loabalancer1 new_hostname=loadbalancer1 ansible_host=192.168.1.22 ansible_user=ubuntu
-loabalancer2 new_hostname=loadbalancer1 ansible_host=192.168.1.23 ansible_user=ubuntu
+#loabalancer1 new_hostname=loadbalancer1 ansible_host=192.168.1.22 ansible_user=ubuntu
+#loabalancer2 new_hostname=loadbalancer1 ansible_host=192.168.1.23 ansible_user=ubuntu
 
 [apigateway]
-apigateway1 new_hostname=apigateway1 ansible_host=192.168.1.24 ansible_user=ubuntu
-apigateway2 new_hostname=apigateway1 ansible_host=192.168.1.25 ansible_user=ubuntu
+#apigateway1 new_hostname=apigateway1 ansible_host=192.168.1.24 ansible_user=ubuntu
+#apigateway2 new_hostname=apigateway1 ansible_host=192.168.1.25 ansible_user=ubuntu
