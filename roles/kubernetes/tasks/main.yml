@@ -1,0 +1,182 @@
+---
+- name: install containerd
+  apt:
+    name: containerd
+    state: present
+
+- name: create containerd config directory
+  file:
+    path: /etc/containerd
+    state: directory
+
+- name: check /etc/containerd/config.toml
+  stat:
+    path: /etc/containerd/config.toml
+  register: containerconfig
+
+- name: make containerd config
+  shell: |
+          sudo containerd config default | sudo tee /etc/containerd/config.toml
+  when: not containerconfig.stat.exists
+
+#     - name: Make containerd to use the systemd cgroup driver
+#       become: yes
+#       become_user: root
+#       lineinfile:
+#         path: /etc/containerd/config.toml
+#         insertafter: '^.+\[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options\]$'
+#         line: "            SystemdCgroup = true"
+#         firstmatch: yes
+#         state: present  
+
+- name: Make containerd to use the systemd cgroup driver
+  lineinfile:
+    path: /etc/containerd/config.toml
+    regexp: '^\s*SystemdCgroup = false$'
+    line: '            SystemdCgroup = true'
+
+- name: enable containerd
+  systemd:
+    name: containerd
+    state: started
+    enabled: yes
+
+- name: install apt-transport-https and curl
+  apt:
+    pkg:
+    - apt-transport-https
+    - software-properties-common
+    - curl
+
+- name: Add an Apt signing key for docker repo
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+
+- name: install the docker arm64 repo
+  apt_repository:
+    repo: 'deb [arch=arm64] https://download.docker.com/linux/ubuntu focal stable'
+    filename: docker
+    state: present
+    update_cache: yes
+
+- name: Add an Apt signing key for google repo
+  apt_key:
+    url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+    state: present
+
+- name: Add K8s Source
+  apt_repository:
+    repo: deb https://apt.kubernetes.io/ kubernetes-xenial main
+    filename: kubernetes
+    state: present
+    update_cache: yes
+
+- name: Install Kubernetes
+  apt:
+    pkg:
+    - kubelet=1.22.2-00
+    - kubeadm=1.22.2-00
+    - kubectl=1.22.2-00
+    state: present
+    force: yes
+    update_cache: yes
+ 
+- name: Hold kubelet
+  dpkg_selections:
+    name: kubelet
+    selection: hold
+ 
+- name: Hold kubeadm
+  dpkg_selections:
+    name: kubeadm
+    selection: hold
+ 
+- name: Hold kubectl
+  dpkg_selections:
+    name: kubectl
+    selection: hold
+
+- name: pull kubernetes config images
+  shell: |
+          sudo kubeadm config images pull
+  ignore_errors: yes
+
+#     - name: Create calico network manager directory
+#       file:
+#         path: "/etc/NetworkManager/conf.d/"
+#         state: directory
+#         mode: '0755'
+# 
+#     - name: Configure calico networking
+#       blockinfile:
+#         path: "/etc/NetworkManager/conf.d/calico.conf"
+#         create: yes
+#         block: |
+#               [keyfile]
+#               unmanaged-devices=interface-name:cali*;interface-name:tunl*;interface-name:vxlan.calico
+
+- name: Download AMD64 calicoctl
+  get_url:
+    url: https://github.com/projectcalico/calicoctl/releases/download/v3.20.2/calicoctl-linux-arm64
+    dest: /usr/local/bin/calicoctl
+    mode: '0755'
+
+- name: Download AMD64 calicoctl-ipam
+  get_url:
+    url: https://github.com/projectcalico/cni-plugin/releases/download/v3.20.2/calico-ipam-arm64
+    dest: /usr/local/bin/calicoctl-ipam
+    mode: '0755'
+ 
+- name: Create a calico config directory
+  file:
+    path: /etc/calico
+    state: directory
+    mode: '0755'
+ 
+- name: Copy calico config file
+  copy:
+    src: calicoctl.cfg
+    dest: /etc/calico/calicoctl.cfg
+    mode: '644' 
+ 
+#    - name: label workers
+#        become: yes
+#      become_user: ubuntu
+#      ignore_errors: yes
+#      shell: |
+#        kubectl label nodes worker1 kubernetes.io/role=worker
+#        kubectl label nodes worker1 node-type=worker
+#        kubectl label nodes worker2 kubernetes.io/role=worker
+#        kubectl label nodes worker2 node-type=worker
+#        kubectl label nodes worker3 kubernetes.io/role=worker
+#        kubectl label nodes worker3 node-type=worker
+
+#    - name: install Tigera operator
+#      become: yes
+#      become_user: ubuntu
+#      shell: kubectl apply -f https://docs.projectcalico.org/manifests/tigera-operator.yaml
+#      ignore_errors: yes
+#      args:
+#        chdir: $HOME
+
+- name: Download AMD64 calicoctl
+  become: yes
+  become_user: root
+  get_url:
+    url: https://github.com/projectcalico/calicoctl/releases/download/v3.20.2/calicoctl-linux-arm64
+    dest: /usr/local/bin/calicoctl
+    mode: '0755'
+  tags:
+  - calico
+
+- name: Download AMD64 calicoctl-ipam
+  become: yes
+  become_user: root
+  get_url:
+    url: https://github.com/projectcalico/cni-plugin/releases/download/v3.20.2/calico-ipam-arm64
+    dest: /usr/local/bin/calicoctl-ipam
+    mode: '0755'
+  tags:
+  - calico
+

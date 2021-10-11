@@ -1,0 +1,116 @@
+- name: .hushlogin
+  become: yes
+  become_user: ubuntu
+  copy:
+    content: ""
+    dest: /home/ubuntu/.hushlogin
+    force: no
+    mode: 0644
+  tags:
+    - userland-hush
+    - userland
+
+- name: pull vimrc from git
+  become: yes
+  become_user: ubuntu
+  git:
+    repo: https://github.com/amix/vimrc.git
+    dest: /home/ubuntu/.vim_runtime
+    force: yes
+  register: vimrcgit
+  changed_when: ( vimrcgit.remote_url_changed is not defined or vimrcgit.remote_url_changed ) 
+  tags:
+    - userland-vim
+    - userland
+
+- name: activate vimrc
+  become: yes
+  become_user: ubuntu
+  command:
+    chdir: /home/ubuntu
+    cmd: /home/ubuntu/.vim_runtime/install_basic_vimrc.sh
+    creates: /home/ubuntu/.vimrc
+  tags:
+    - userland-vim
+    - userland
+
+- name: pull vim plugin for yml
+  become: yes
+  become_user: ubuntu
+  git:
+    repo: https://github.com/pearofducks/ansible-vim.git
+    dest: /home/ubuntu/.vim_runtime/my_plugins/ansible-vim
+  register: vimymlgit
+  tags:
+    - userland-vim
+    - userland
+
+#    - name: update vim plugins
+#      command:
+#        cmd: python update_plugins.py
+#        chdir: /home/ubuntu/.vim_runtime
+#      when: ( vimrcgit.remote_url_changed is not defined or vimrcgit.remote_url_changed ) or
+#            ( vimymlgit.remote_url_changed is not defined or vimymlgit.remote_url_changed )
+#      tags:
+#        - userland-vim
+#        - userland
+    
+- name: bashrc colors
+  become: yes
+  become_user: ubuntu
+  lineinfile:
+    path: '~/.bashrc'
+    line: "LS_COLORS=$LS_COLORS:'di=0;36' ; export LS_COLORS"
+    state: present
+    create: yes
+  tags:
+    - env
+
+- name: bashrc etcd apiv3
+  become: yes
+  become_user: ubuntu
+  lineinfile:
+    path: '~/.bashrc'
+    line: "export ETCDCTL_API=3"
+    state: present
+    create: yes
+  tags:
+    - env
+
+- name: bashrc etcd endpoints
+  become: yes
+  become_user: ubuntu
+  lineinfile:
+    path: '~/.bashrc'
+    line: "export ETCDCTL_ENDPOINTS=http://192.168.1.11:2379,http://192.168.1.12:2379,http://192.168.1.13:2379"
+    state: present
+    create: yes
+  tags:
+    - env
+
+- name: bashrc etcd endpoints
+  become: yes
+  become_user: ubuntu
+  lineinfile:
+    path: '~/.bashrc'
+    line: "export ENDPOINTS=http://192.168.1.11:2379,http://192.168.1.12:2379,http://192.168.1.13:2379"
+    state: present
+    create: yes
+  tags:
+    - env
+
+- name: kubernetes in .bashrc
+  become: yes
+  become_user: ubuntu
+  blockinfile:
+    dest: "$HOME/.bashrc"
+    block: |
+      source <(kubectl completion bash)
+      alias k=kubectl  
+      complete -F __start_kubectl k
+    create: yes
+
+- name: Install etcd
+  apt:
+    name: etcd
+    state: present

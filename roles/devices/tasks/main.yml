@@ -1,0 +1,136 @@
+---
+- name: Remove unattended-upgrades package
+  apt:
+    name: unattended-upgrades
+    state: absent
+
+- name: Update and upgrade apt packages
+  become: true
+  apt:
+    upgrade: "yes"
+    update_cache: "yes"
+
+- name: create the ubuntu user account
+  user: name=ubuntu append=yes state=present createhome=yes shell=/bin/bash
+
+- name: allow 'ubuntu' to use sudo without needing a password
+  lineinfile:
+    dest: /etc/sudoers
+    line: 'ubuntu ALL=(ALL) NOPASSWD: ALL'
+    validate: 'visudo -cf %s'
+
+- name: set up authorized keys for the ubuntu user
+  authorized_key: user=ubuntu key="{{item}}"
+  with_file:
+    - ~/.ssh/id_rsa.pub
+
+- name: "update hostnames"
+  hostname:
+    name: "{{ new_hostname }}"
+
+- name: Update /etc/hosts
+  blockinfile:
+      path: /etc/hosts
+      create: yes
+      block: |
+        {% for item in ansible_play_batch %}
+        {{ hostvars[item].ansible_host }}   {{ item }}    
+        {% endfor %}
+
+- name: Install network-manager
+  apt:
+    name:
+      - libnm-dev
+      - network-manager
+
+#    - name: Add an Ethernet connection with static IP configuration
+#      nmcli:
+#        conn_name: my-eth0
+#        ifname: eth0
+#        type: ethernet
+#        ip4: "{{ ansible_host }}/24"
+#        gw4: 192.168.1.1
+#        autoconnect: yes
+#        dns4:
+#          - 192.168.1.1
+#        state: present
+
+- name: Disable resolvd
+  systemd:
+    name: systemd-resolved
+    state: stopped
+    enabled: no
+
+- name: Modify NetworkManager.conf
+  lineinfile:
+    dest: /etc/NetworkManager/NetworkManager.conf
+    insertafter: '^[main]$'
+    line: 'dns=default'
+    state: present
+
+- name: check /etc/resolv.conf
+  stat:
+    path: /etc/resolv.conf
+  register: resolv
+
+- name: delete /etc/resolv.conf if symlink
+  file:
+    path: /etc/resolv.conf
+    state: absent
+  when: resolv.stat.islnk is defined and resolv.stat.islnk
+
+- name: Update /etc/resolv.conf
+  blockinfile:
+      path: /etc/resolv.conf
+      create: yes
+      block: |
+        nameserver 192.168.1.1
+        search localdomain
+  register: newresolv
+#      when: resolv.stat is defined
+
+- name: Restart network-manager
+  service:
+    name: NetworkManager
+    state: restarted
+  when: resolv.stat is defined or newresolv.stat is defined
+
+- name: Set timezone to America/Toronto
+  timezone:
+    name: America/Toronto
+
+- name: install chrony
+  package:
+    name: chrony
+    state: present
+
+#- name: Mask NTP service
+#  systemd:
+#    name: ntpd
+#    enabled: no
+#    masked: yes
+#    state: stopped
+
+- name: Ensure chronyd is active
+  service:
+    name: chronyd
+    state: started
+
+- name: install chrony.conf
+  template:
+    src: ../templates/chrony-master.conf.j2
+    dest: /etc/chrony/chrony.conf
+    owner: root
+    group: root
+    mode: 0644
+
+#  - name: install chrony.keys
+#    template:
+#      src: ../templates/chrony.keys.j2
+#      dest: /etc/chrony/chrony.keys
+#      owner: root
+#      group: root
+#      mode: 0640
+#    notify: restart chronyd
+
+

@@ -1,0 +1,7 @@
+- name: Fancy Userland
+  hosts: controllers
+  gather_facts: yes
+  become: no
+
+  tasks:
+    - include: tasks/main.yml

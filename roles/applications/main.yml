@@ -1,0 +1,7 @@
+- name: Applications
+  hosts: controllers
+  gather_facts: yes
+  become: yes
+
+  tasks:
+    - include: tasks/main.yml

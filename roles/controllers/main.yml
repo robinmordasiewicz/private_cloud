@@ -1,0 +1,7 @@
+- name: Configure Controllers
+  gather_facts: yes
+  become: yes
+  hosts: controllers
+
+  tasks:
+    - include: tasks/main.yml

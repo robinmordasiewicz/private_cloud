@@ -1,0 +1,43 @@
+# Use public servers from the pool.ntp.org project.
+# Please consider joining the pool (http://www.pool.ntp.org/join.html).
+server 0.debian.pool.ntp.org iburst xleave
+server 1.debian.pool.ntp.org iburst xleave
+server 2.debian.pool.ntp.org iburst xleave
+
+# Record the rate at which the system clock gains/losses time.
+driftfile /var/lib/chrony/drift
+
+# Allow the system clock to be stepped in the first three updates
+# if its offset is larger than 1 second.
+makestep 1.0 3
+
+# This is disabled on the slaves, since VMs don't have an RTC
+rtcsync
+
+# This likely does nothing since my network interface is a bridge
+# device.  However, if things change, this is good practice.
+# Disabled on slaves
+hwtimestamp *
+
+# Increase the minimum number of selectable sources required to adjust
+# the system clock.
+#minsources 2
+
+# Allow NTP client access from local network.
+# This is of course not enabled on the slaves
+allow 192.168.1.0/24
+allow fe80::/64
+
+# Serve time even if not synchronized to a time source.
+# In case my network gets isolated, I still want
+# Kerberos to work.
+local stratum 10
+
+# Specify file containing keys for NTP authentication.
+keyfile /etc/chrony/chrony.keys
+
+# Specify directory for log files.
+logdir /var/log/chrony
+
+# Select which information is logged.
+#log measurements statistics tracking

@@ -1,0 +1,45 @@
+- name: Raspberry PI Home K8S lab
+  hosts: all
+  gather_facts: yes
+  become: yes
+
+  tasks:
+    - name: base OS
+      import_role:
+        name: devices
+
+    - name: ETCD
+      import_role:
+        name: etcd
+      when: inventory_hostname in groups['etcd']
+
+    - name: k8s OS tweaks
+      import_role:
+        name: k8s-devices
+      when: inventory_hostname in groups['controllers'] or inventory_hostname in groups['workers']
+
+    - name: Kubernetes
+      import_role:
+        name: kubernetes
+      when: inventory_hostname in groups['controllers'] or inventory_hostname in groups['workers']
+
+    - name: Userland
+      import_role:
+        name: userland
+      when: inventory_hostname in groups['controllers']
+
+    - name: Controllers
+      import_role:
+        name: controllers
+      when: inventory_hostname in groups['controllers']
+
+    - name: Workers
+      import_role:
+        name: workers
+      when: inventory_hostname in groups['workers']
+
+    - name: Applications
+      import_role:
+        name: applications
+      when: inventory_hostname in groups['controllers']
+

@@ -1,0 +1,3 @@
+- name: Join Workers to the controller
+  gather_facts: yes
+  become: no

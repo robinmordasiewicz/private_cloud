@@ -1,0 +1,31 @@
+- name: Reset k8s
+  shell: sudo kubeadm reset -f
+  args:
+    chdir: $HOME
+
+#- name: Copy the file from {{groups['controllers'][0]}}
+#  tags: sync-push
+#  synchronize:
+#    src: "{{ item }}"
+#    dest: "{{ item }}"
+#    mode: push
+#  delegate_to: "{{groups['controllers'][0]}}"
+#  register: syncfile
+#  with_items:
+#   - "/home/ubuntu/kubadm-join.sh"
+
+- name: Copy join command
+  copy:
+    src: kubadm-join.sh
+    dest: /home/ubuntu/kubadm-join.sh
+    mode: '755'
+
+- name: Joining the Node...
+  shell: sudo /home/ubuntu/kubadm-join.sh
+
+- name: label {{ inventory_hostname }} as a worker
+  shell: |
+     kubectl label nodes {{ inventory_hostname }} kubernetes.io/role=worker
+     kubectl label nodes {{ inventory_hostname }} node-type=worker
+  delegate_to: "{{ groups['controllers'][0] }}"
+

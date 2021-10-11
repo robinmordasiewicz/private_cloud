@@ -1,0 +1,67 @@
+---
+- name: Enable container features
+  replace:
+    path: /boot/firmware/cmdline.txt
+    regexp: '^([\w](?!.*\b{{ item }}\b).*)$'
+    replace: '\1 {{ item }}'
+  with_items:
+  - "cgroup_enable=cpuset"
+  - "cgroup_memory=1"
+  - "cgroup_enable=memory"
+  notify: Reboot host and wait for it to restart
+
+- name: Load br_netfilter and overlay at boot
+  blockinfile:
+    create: yes
+    path: "/etc/modules-load.d/containerd.conf"
+    block: |
+          overlay
+          br_netfilter
+
+- name: Modprobe overlay
+  modprobe:
+    name: overlay
+    state: present
+
+- name: Modprobe br_netfilter
+  modprobe:
+    name: br_netfilter
+    state: present
+
+- name: Apply bridge-nf-call-iptables sysctl
+  sysctl:
+    name: net.bridge.bridge-nf-call-iptables
+    value: '1'
+    sysctl_file: /etc/sysctl.d/99-kubernetes-cri.conf
+    reload: yes
+
+- name: Apply ip_forward sysctl
+  sysctl:
+    name: net.ipv4.ip_forward
+    value: '1'
+    sysctl_file: /etc/sysctl.d/99-kubernetes-cri.conf
+    reload: yes
+
+- name: Apply bridge-nf-call-ip6tables sysctl
+  sysctl:
+    name: net.bridge.bridge-nf-call-ip6tables
+    value: '1'
+    sysctl_file: /etc/sysctl.d/99-kubernetes-cri.conf
+    reload: yes
+
+- name: Disable swap
+  command: swapoff -a
+  when: ansible_swaptotal_mb > 0
+
+- name: Disable SWAP in fstab since kubernetes can't work with swap enabled
+  replace:
+    path: /etc/fstab
+    regexp: '^([^#].*?\sswap\s+sw\s+.*)$'
+    replace: '# \1'
+
+- name: Install NFS tools
+  apt:
+    pkg:
+    - nfs-common
+    state: present
+    update_cache: yes

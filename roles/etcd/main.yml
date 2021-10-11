@@ -1,0 +1,13 @@
+- name: Install etcd
+  gather_facts: yes
+  become: yes
+  hosts: etcd
+
+  tasks:
+    - include: tasks/main.yml
+
+  handlers:
+    - name: restart etcd
+      service:
+        name: etcd
+        state: restarted

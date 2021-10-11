@@ -1,0 +1,22 @@
+---
+# tasks file for applications
+
+- name: Copy application declaration
+  become: yes
+  become_user: ubuntu
+  copy:
+    src: "../files/deployment.yaml"
+    dest: "/home/ubuntu/deployment.yaml"
+    owner: "ubuntu"
+    group: "ubuntu"
+    mode:  0644
+
+- name: Create Namespace
+  become: yes
+  become_user: ubuntu
+  shell: kubectl create namespace www
+
+- name: Deploy application 
+  become: yes
+  become_user: ubuntu
+  shell: kubectl apply -f deployment.yaml -n www

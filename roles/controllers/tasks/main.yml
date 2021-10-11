@@ -1,0 +1,286 @@
+- name: Reset k8s
+  shell: sudo kubeadm reset -f
+  args:
+    chdir: $HOME
+
+- name: delete kube config
+  become: yes
+  become_user: ubuntu
+  file:
+    path: $HOME/.kube/config
+    state: absent
+
+- name: Create kubeadm-config.yaml
+  become: yes
+  become_user: ubuntu
+  template:
+      src: "kubeadm-config.yaml.j2"
+      dest: "/home/ubuntu/kubeadm-config.yaml"
+      owner: "ubuntu"
+      group: "ubuntu"
+      mode:  0644
+
+- name: kubeadm init
+  shell: kubeadm init --config /home/ubuntu/kubeadm-config.yaml
+
+#    - name: Copy kubeadm-config-iptables-mode.yaml
+#      copy:
+#        src: kubeadm-config-iptables-mode.yaml
+#        dest: /home/ubuntu/kubeadm-config-iptables-mode.yaml
+#        mode: '644'
+
+#    - name: initialize the cluster
+#      shell: kubeadm init --config /home/ubuntu/kubeadm-config-iptables-mode.yaml
+#      args:
+#        chdir: $HOME
+#        creates: cluster_initialized.txt
+
+#    - name: initialize the cluster
+#      become: yes
+#      become_user: ubuntu
+#      shell: sudo kubeadm init --pod-network-cidr=10.96.0.0/16 --service-cidr=10.97.0.0/24 --service-dns-domain=dcs.example.local
+#      args:
+#        chdir: $HOME
+#        creates: cluster_initialized.txt
+
+#- name: initialize the cluster
+#  become: yes
+#  become_user: ubuntu
+#  shell: sudo kubeadm init --pod-network-cidr=10.244.0.0/16
+#  args:
+#    chdir: $HOME
+#    creates: cluster_initialized.txt
+
+- name: create .kube directory
+  become: yes
+  become_user: ubuntu
+  file:
+    path: $HOME/.kube
+    state: directory
+    mode: 0700
+
+- name: copies admin.conf to user's kube config
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: /home/ubuntu/.kube/config
+    remote_src: yes
+    owner: ubuntu
+    mode: 0600
+
+- name: copies admin.conf to user's workstation
+  become: yes
+  become_user: ubuntu
+  fetch:
+    src: $HOME/.kube/config
+    dest: /Users/mordasiewicz/.kube/config
+    flat: yes
+
+#    - name: Untaint controller to run pods
+#      become: yes
+#      become_user: ubuntu
+#      shell: kubectl taint nodes --all node-role.kubernetes.io/master-
+
+- name: Check if Helm binary exists.
+  stat:
+    path: "/usr/local/bin/helm"
+  register: helm_check
+
+- name: Check Helm version.
+  command: "/usr/local/bin/helm version"
+  failed_when: false
+  changed_when: false
+  register: helm_existing_version
+
+- name: Download helm installer
+  become: yes
+  become_user: ubuntu
+  get_url:
+    url: https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+    dest: $HOME/get_helm.sh
+    mode: '0755'
+  register: helm_download
+  when: >
+    not helm_check.stat.exists
+
+- name: Install helm
+  shell: bash /home/ubuntu/get_helm.sh
+  become: yes
+  become_user: root
+  when: helm_download is changed
+
+#    - name: Install Flannel
+#      become: yes
+#      become_user: ubuntu
+#      shell: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+
+- name: Download AMD64 calicoctl
+  become: yes
+  become_user: root
+  get_url:
+    url: https://github.com/projectcalico/calicoctl/releases/download/v3.20.2/calicoctl-linux-arm64
+    dest: /usr/local/bin/calicoctl
+    mode: '0755'
+  tags:
+  - calico
+
+- name: Download AMD64 calicoctl-ipam
+  become: yes
+  become_user: root
+  get_url:
+    url: https://github.com/projectcalico/cni-plugin/releases/download/v3.20.2/calico-ipam-arm64
+    dest: /usr/local/bin/calicoctl-ipam
+    mode: '0755'
+  tags:
+  - calico
+
+- name: Create a calico config directory
+  file:
+    path: /etc/calico
+    state: directory
+    mode: '0755'
+  tags:
+  - calico
+
+- name: Copy calico config file
+  copy:
+    src: calicoctl.cfg
+    dest: /etc/calico/calicoctl.cfg
+    mode: '644'
+  tags:
+  - calico
+
+#    - name: install Tigera operator
+#      become: yes
+#      become_user: ubuntu
+#      shell: kubectl apply -f https://docs.projectcalico.org/manifests/tigera-operator.yaml
+#      ignore_errors: yes
+#      args:
+#        chdir: $HOME
+#      tags:
+#      - calico
+
+#    - name: Download Calico customize file
+#      get_url:
+#        url: https://docs.projectcalico.org/manifests/custom-resources.yaml
+#        dest: /home/ubuntu/custom-resources.yaml
+#      tags:
+#      - calico
+
+#    - name: Modify calico ipPool
+#      lineinfile:
+#        path: /home/ubuntu/custom-resources.yaml
+#        regexp: '^.*192\.168\.0\.0.*$'
+#        line: '      cidr: 10.48.0.0/16'
+#      tags:
+#      - calico
+
+#    - name: Modify calico ipPool
+#      lineinfile:
+#        path: /home/ubuntu/custom-resources.yaml
+#        regexp: '^.*encapsulation: VXLANCrossSubnet$'
+#        line: '      encapsulation: None'
+#      tags:
+#      - calico
+
+#    - name: install Calico custom resources
+#      become: yes
+#      become_user: ubuntu
+#      shell: kubectl apply -f custom-resources.yaml
+#      args:
+#        chdir: $HOME
+#      tags:
+#      - calico
+
+- name: Download Calico manifest
+  become: yes
+  become_user: ubuntu
+  get_url:
+    url: https://docs.projectcalico.org/manifests/calico.yaml
+    dest: /home/ubuntu/calico.yaml
+  tags:
+  - calico
+
+- name: Modify calico ipPool
+  become: yes
+  become_user: ubuntu
+  lineinfile:
+    path: /home/ubuntu/calico.yaml
+    regexp: '^.*# - name: CALICO_IPV4POOL_CIDR.*$'
+    line: '            - name: CALICO_IPV4POOL_CIDR'
+  tags:
+  - calico
+
+- name: Modify calico ipPool
+  become: yes
+  become_user: ubuntu
+  lineinfile:
+    path: /home/ubuntu/calico.yaml
+    regexp: '^.*#.*value: \"192\.168\.0\.0/16\"$'
+    line: '              value: "10.244.0.0/16"'
+  tags:
+  - calico
+
+- name: kubectl install calico
+  become: yes
+  become_user: ubuntu
+  shell: kubectl apply -f /home/ubuntu/calico.yaml
+  args:
+    chdir: $HOME
+  tags:
+  - calico
+
+- name: Copy MetalLB config
+  become: yes
+  become_user: ubuntu
+  copy:
+    src: metallb-config.yml
+    dest: $HOME/metallb-config.yml
+    mode: '644'
+  tags:
+  - ingresslb
+
+- name: Install MetalLB
+  become: yes
+  become_user: ubuntu
+  ignore_errors: yes
+  shell: |
+           kubectl create namespace metallb-system
+           kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.10.2/manifests/metallb.yaml
+           kubectl apply -f metallb-config.yml
+  tags:
+  - ingresslb
+
+- name: Install NGINX Ingress
+  become: yes
+  become_user: ubuntu
+  ignore_errors: yes
+  shell: |
+           kubectl create namespace ingress-nginx
+           helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+           helm repo update
+           helm install ingress-nginx ingress-nginx/ingress-nginx -n ingress-nginx --set controller.admissionWebhooks.enabled=false --set defaultBackend.image.repository="k8s.gcr.io/defaultbackend-arm64" --set rbac.create=true --set controller.kind=DaemonSet --set controller.service.type=LoadBalancer --set controller.service.externalTrafficPolicy=Local --set controller.publishService.enabled=true --set enable-prometheus-metrics=true
+  tags:
+  - ingresslb
+
+- name: Generate join token
+  become: yes
+  become_user: ubuntu
+  shell: kubeadm token create --print-join-command
+  register: kubeadm_join_cmd
+
+- set_fact:
+    kubeadm_join: "{{ kubeadm_join_cmd.stdout }}"
+
+- name: Store join command
+  become: yes
+  become_user: ubuntu
+  action: copy content="{{ kubeadm_join }}" dest="$HOME/kubadm-join.sh" mode=0755
+
+- name: Copy the join command local
+  become: yes
+  become_user: ubuntu
+  fetch:
+    src: $HOME/kubadm-join.sh
+    dest: kubadm-join.sh
+    flat: yes
+
