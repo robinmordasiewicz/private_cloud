@@ -70,8 +70,6 @@ packages:
 - ansible
 - git
 - curl
-#- pastebinit
-#- [libpython2.7, 2.7.3-0ubuntu3.1]
 
 ## Write arbitrary files to the file-system (including binaries!)
 #write_files:
@@ -98,10 +96,10 @@ runcmd:
 - /usr/bin/ssh-keygen -t rsa -f /root/.ssh/id_rsa -q -P "" 
 - /usr/bin/cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys
 - /usr/bin/cp -a /root/.ssh/ /home/ubuntu/
-- /usr/bin/git clone https://github.com/robinmordasiewicz/private_cloud.git /home/ubuntu/private_cloud
+#- /usr/bin/git clone https://github.com/robinmordasiewicz/private_cloud.git /home/ubuntu/private_cloud
 - /usr/bin/chown -R 'ubuntu' /home/ubuntu/
 - /usr/bin/chgrp -R 'ubuntu' /home/ubuntu/
-- su -l -c "/usr/bin/ansible-playbook -i /home/ubuntu/private_cloud/inventory /home/ubuntu/private_cloud/main.yml" ubuntu
+#- su -l -c "/usr/bin/ansible-playbook -i /home/ubuntu/private_cloud/inventory /home/ubuntu/private_cloud/main.yml" ubuntu
 
 #- [ /usr/bin/git, clone, https://github.com/robinmordasiewicz/private_cloud.git, /home/ubuntu/ ]
 #- [ /usr/bin/ssh-keygen, -t, rsa, -f, /home/ubuntu/.ssh/id_rsa, -q, -P, "" ]
