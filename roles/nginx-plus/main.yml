@@ -1,0 +1,7 @@
+- name: Install NGINX
+  hosts: loadbalancers
+  gather_facts: yes
+  become: yes
+
+  tasks:
+    - include: tasks/main.yml

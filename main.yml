@@ -49,3 +49,7 @@
         name: applications
       when: inventory_hostname in groups['controllers']
 
+    - name: NGINX+
+      import_role:
+        name: nginx-plus
+      when: inventory_hostname in groups['loadbalancers']

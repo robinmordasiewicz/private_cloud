@@ -1,3 +1,7 @@
 - name: Join Workers to the controller
+  hosts: workers
   gather_facts: yes
   become: no
+
+  tasks:
+    - include: tasks/main.yml
