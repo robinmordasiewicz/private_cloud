@@ -5,15 +5,15 @@
 
 [controllers]
 #controller1 clustermember=cluster1 new_hostname=controller1 ansible_host=192.168.1.10 ansible_user=ubuntu ingressip=192.168.1.193 kubeadmRole=init
-controller2 clustermember=cluster1 new_hostname=controller1 ansible_host=192.168.1.21 ansible_user=ubuntu ingressip=192.168.1.193 kubeadmRole=join
+#controller2 clustermember=cluster1 new_hostname=controller1 ansible_host=192.168.1.21 ansible_user=ubuntu ingressip=192.168.1.193 kubeadmRole=join
 
 [workers]
 #worker1 new_hostname=worker1 ansible_host=192.168.1.14 ansible_user=ubuntu
 #worker2 new_hostname=worker2 ansible_host=192.168.1.20 ansible_user=ubuntu
 
 [loadbalancers]
-#loabalancer1 new_hostname=loadbalancer1 ansible_host=192.168.1.22 ansible_user=ubuntu
-#loabalancer2 new_hostname=loadbalancer1 ansible_host=192.168.1.23 ansible_user=ubuntu
+loabalancer1 new_hostname=loadbalancer1 ansible_host=192.168.1.27 ansible_user=ubuntu
+loabalancer2 new_hostname=loadbalancer1 ansible_host=192.168.1.34 ansible_user=ubuntu
 
 [apigateway]
 #apigateway1 new_hostname=apigateway1 ansible_host=192.168.1.24 ansible_user=ubuntu

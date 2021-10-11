@@ -95,12 +95,13 @@ packages:
 ## Run arbitrary commands at rc.local like time
 runcmd:
 - /usr/bin/touch /home/ubuntu/.hushlogin
+- /usr/bin/ssh-keygen -t rsa -f /root/.ssh/id_rsa -q -P "" 
+- /usr/bin/cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys
+- /usr/bin/cp -a /root/.ssh/ /home/ubuntu/
 - /usr/bin/git clone https://github.com/robinmordasiewicz/private_cloud.git /home/ubuntu/private_cloud
-- /usr/bin/ssh-keygen -t rsa -f /home/ubuntu/.ssh/id_rsa -q -P "" 
-- /usr/bin/cat /home/ubuntu/.ssh/id_rsa.pub >> /home/ubuntu/.ssh/authorized_keys
 - /usr/bin/chown -R 'ubuntu' /home/ubuntu/
 - /usr/bin/chgrp -R 'ubuntu' /home/ubuntu/
-- 'su -l -c "/usr/bin/ansible-playbook -i /home/ubuntu/private_cloud/inventory /home/ubuntu/private_cloud/main.yml" ubuntu'
+- su -l -c "/usr/bin/ansible-playbook -i /home/ubuntu/private_cloud/inventory /home/ubuntu/private_cloud/main.yml" ubuntu
 
 #- [ /usr/bin/git, clone, https://github.com/robinmordasiewicz/private_cloud.git, /home/ubuntu/ ]
 #- [ /usr/bin/ssh-keygen, -t, rsa, -f, /home/ubuntu/.ssh/id_rsa, -q, -P, "" ]
