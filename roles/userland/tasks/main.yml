@@ -10,6 +10,11 @@
     - userland-hush
     - userland
 
+- name: Install docker
+  apt:
+    name: docker.io
+    state: present
+
 - name: pull vimrc from git
   become: yes
   become_user: ubuntu
