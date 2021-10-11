@@ -100,7 +100,7 @@ runcmd:
 - /usr/bin/cat /home/ubuntu/.ssh/id_rsa.pub >> /home/ubuntu/.ssh/authorized_keys
 - /usr/bin/chown -R 'ubuntu' /home/ubuntu/
 - /usr/bin/chgrp -R 'ubuntu' /home/ubuntu/
-- 'su -c "/usr/bin/ansible-playbook -i /home/ubuntu/private_cloud/inventory /home/ubuntu/private_cloud/main.yml" ubuntu'
+- 'su -l -c "/usr/bin/ansible-playbook -i /home/ubuntu/private_cloud/inventory /home/ubuntu/private_cloud/main.yml" ubuntu'
 
 #- [ /usr/bin/git, clone, https://github.com/robinmordasiewicz/private_cloud.git, /home/ubuntu/ ]
 #- [ /usr/bin/ssh-keygen, -t, rsa, -f, /home/ubuntu/.ssh/id_rsa, -q, -P, "" ]
