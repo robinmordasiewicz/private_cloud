@@ -1,12 +1,20 @@
+[etcd]
+#etcd1 new_hostname=etcd1 ansible_host=192.168.1.11 ansible_user=ubuntu
+#etcd2 new_hostname=etcd2 ansible_host=192.168.1.12 ansible_user=ubuntu
+#etcd3 new_hostname=etcd3 ansible_host=192.168.1.13 ansible_user=ubuntu
+
 [controllers]
-controller1 clustermember=cluster1 new_hostname=controller1 ansible_host=192.168.1.10 ansible_user=ubuntu ingressip=192.168.1.193
-#controller2 clustermember=cluster1 new_hostname=controller1 ansible_host=192.168.1.21 ansible_user=ubuntu ingressip=192.168.1.193
+#controller1 clustermember=cluster1 new_hostname=controller1 ansible_host=192.168.1.10 ansible_user=ubuntu ingressip=192.168.1.193 kubeadmRole=init
+controller2 clustermember=cluster1 new_hostname=controller1 ansible_host=192.168.1.21 ansible_user=ubuntu ingressip=192.168.1.193 kubeadmRole=join
 
 [workers]
-worker1 new_hostname=worker1 ansible_host=192.168.1.14 ansible_user=ubuntu
-worker2 new_hostname=worker2 ansible_host=192.168.1.20 ansible_user=ubuntu
+#worker1 new_hostname=worker1 ansible_host=192.168.1.14 ansible_user=ubuntu
+#worker2 new_hostname=worker2 ansible_host=192.168.1.20 ansible_user=ubuntu
 
-[etcd]
-etcd1 new_hostname=etcd1 ansible_host=192.168.1.11 ansible_user=ubuntu
-etcd2 new_hostname=etcd2 ansible_host=192.168.1.12 ansible_user=ubuntu
-etcd3 new_hostname=etcd3 ansible_host=192.168.1.13 ansible_user=ubuntu
+[loadbalancers]
+loabalancer1 new_hostname=loadbalancer1 ansible_host=192.168.1.22 ansible_user=ubuntu
+loabalancer2 new_hostname=loadbalancer1 ansible_host=192.168.1.23 ansible_user=ubuntu
+
+[apigateway]
+apigateway1 new_hostname=apigateway1 ansible_host=192.168.1.24 ansible_user=ubuntu
+apigateway2 new_hostname=apigateway1 ansible_host=192.168.1.25 ansible_user=ubuntu

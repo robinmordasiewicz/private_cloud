@@ -1,9 +1,14 @@
-- name: Raspberry PI Home K8S lab
+- name: Bare Metal Home K8S lab
   hosts: all
   gather_facts: yes
   become: yes
 
   tasks:
+
+    - name: Wait for cloud-init / user-data to finish
+      command: cloud-init status --wait
+      changed_when: false
+
     - name: base OS
       import_role:
         name: devices
